@@ -21,6 +21,9 @@
 
 STDOUT.sync = true
 
+require 'shellwords'
+require 'English'
+require 'find'
 require 'slop'
 require 'nokogiri'
 require 'rainbow'
@@ -39,6 +42,11 @@ begin
   end
   args += ARGV
 
+  dir = Dir.pwd
+  @dir = File.absolute_path(dir)
+  files = Dir.glob(
+    File.join(@dir, '**/*'), File::FNM_DOTMATCH
+  ).reject { |f| File.directory?(f) }
   begin
     opts = Slop.parse(args, strict: true, help: true) do |o|
       o.banner = "Usage (#{PDD::VERSION}): pdd [options]"
@@ -56,6 +64,8 @@ begin
       o.string '-f', '--file', 'File to save XML into'
       o.array '-e', '--exclude', 'Glob pattern to exclude, e.g. "**/*.jpg"',
               default: []
+      o.array '-n', '--include', 'Glob pattern to include only, e.g. "**/*.jpg"',
+              default: [files]
       o.string '-t', '--format', 'Format of the report (xml|html)'
       o.array(
         '-r', '--rule', 'Rule to apply (can be used many times)',
